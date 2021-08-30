@@ -1,12 +1,14 @@
-import React from "react";
+import React, { useState } from "react";
 import { StyleSheet, Text, View, FlatList, Button } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import Colors from "../../constants/Colors";
 import CartItem from "../../components/shop/CartItem";
 import * as cartAction from "../../store/actions/cart";
 import * as orderAction from "../../store/actions/order";
+import Spinner from "../../components/UI/Spinner";
 
 const CartScreen = (props) => {
+  const [isLoading, setIsLoading] = useState(false);
   const cartTotalAmount = useSelector((state) => state.cart.totalAmount);
   const totalAmount = Math.abs(cartTotalAmount.toFixed(2));
   const dispatch = useDispatch();
@@ -30,6 +32,12 @@ const CartScreen = (props) => {
     <CartItem data={item} onRemove={removeItemHandler} deletable />
   );
 
+  const sendOrderHandler = async () => {
+    setIsLoading(true);
+    await dispatch(orderAction.addOrder(cartItems, cartTotalAmount));
+    setIsLoading(false);
+  };
+
   return (
     <View style={styles.screen}>
       <View style={styles.summary}>
@@ -37,14 +45,16 @@ const CartScreen = (props) => {
           Total:
           <Text style={styles.amount}> ${totalAmount}</Text>
         </Text>
-        <Button
-          title="Order Now"
-          color={Colors.primary}
-          disabled={cartItems.length === 0}
-          onPress={() =>
-            dispatch(orderAction.addOrder(cartItems, cartTotalAmount))
-          }
-        />
+        {isLoading ? (
+          <Spinner />
+        ) : (
+          <Button
+            title="Order Now"
+            color={Colors.primary}
+            disabled={cartItems.length === 0}
+            onPress={sendOrderHandler}
+          />
+        )}
       </View>
       <View>
         <FlatList

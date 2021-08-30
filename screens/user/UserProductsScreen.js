@@ -41,11 +41,18 @@ const UserProductsScreen = (props) => {
       <Button
         color={Colors.primary}
         title="Delete"
-        // onPress={() => dispatch(productsAction.deleteProduct(item.id))}
         onPress={() => deleteHandler(item.id)}
       />
     </ProductItem>
   );
+
+  if (userProducts.length === 0) {
+    return (
+      <View style={styles.empty}>
+        <Text>No products found, maybe start creating some ?</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -90,5 +97,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     marginHorizontal: 22,
+  },
+  empty: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

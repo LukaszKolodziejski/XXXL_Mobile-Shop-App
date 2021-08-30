@@ -1,15 +1,46 @@
-import React from "react";
-import { StyleSheet, View, FlatList, Button } from "react-native";
+import React, { useState, useEffect, useCallback } from "react";
+import { StyleSheet, View, FlatList, Button, Text } from "react-native";
 import { useSelector, useDispatch } from "react-redux";
 import { HeaderButtons, Item } from "react-navigation-header-buttons";
 import HeaderButton from "../../components/UI/HeaderButton";
 import ProductItem from "../../components/shop/ProductItem";
 import * as cartAction from "../../store/actions/cart";
+import * as productsAction from "../../store/actions/products";
 import Colors from "../../constants/Colors";
+import Spinner from "../../components/UI/Spinner";
 
 const ProductsOverviewScreen = (props) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [error, setError] = useState(null);
   const products = useSelector((state) => state.products.availableProducts);
   const dispatch = useDispatch();
+
+  const loadProducts = useCallback(async () => {
+    setError(null);
+    setIsRefreshing(true);
+    try {
+      await dispatch(productsAction.fetchProduct());
+    } catch (err) {
+      setError(err.message);
+    }
+    setIsRefreshing(false);
+  }, [dispatch, setIsLoading, setError]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    loadProducts().then(() => {
+      setIsLoading(false);
+    });
+  }, [loadProducts, setIsLoading]);
+
+  useEffect(() => {
+    const willFocusSub = props.navigation.addListener(
+      "willFocus",
+      loadProducts
+    );
+    return () => willFocusSub.remove();
+  }, [loadProducts]);
 
   const viewDetailHandler = (id, title) => {
     props.navigation.navigate({
@@ -35,9 +66,30 @@ const ProductsOverviewScreen = (props) => {
       />
     </ProductItem>
   );
+
+  if (error) {
+    return (
+      <View style={styles.loading}>
+        <Text>{error}</Text>
+      </View>
+    );
+  }
+
+  if (isLoading) return <Spinner />;
+
+  if (!isLoading && products.length === 0) {
+    return (
+      <View style={styles.loading}>
+        <Text>No products found. Maybe start adding some!</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <FlatList
+        onRefresh={loadProducts}
+        refreshing={isRefreshing}
         data={products}
         renderItem={renderItem}
         keyExtractor={(item) => item.id}
