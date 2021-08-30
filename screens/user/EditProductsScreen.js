@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useReducer } from "react";
+import React, { useState, useEffect, useCallback, useReducer } from "react";
 import {
   StyleSheet,
   View,
@@ -13,8 +13,7 @@ import { HeaderButtons, Item } from "react-navigation-header-buttons";
 import HeaderButton from "../../components/UI/HeaderButton";
 import Input from "../../components/UI/Input";
 import * as productsAction from "../../store/actions/products";
-
-import ValidMessage from "../../components/user/ValidMessage";
+import Spinner from "../../components/UI/Spinner";
 
 const FORM_INPUT_UPDATE = "FORM_INPUT_UPDATE";
 
@@ -43,6 +42,7 @@ const formReducer = (state, action) => {
 };
 
 const EditProductsScreen = (props) => {
+  const [isLoading, setIsLoading] = useState(false);
   const productId = props.navigation.getParam("id");
   const userProducts = useSelector((state) => state.products.userProducts);
   const product = userProducts.find((prod) => prod.id === productId);
@@ -65,7 +65,7 @@ const EditProductsScreen = (props) => {
     formIsValid: product ? true : false,
   });
 
-  const submitHandler = useCallback(() => {
+  const submitHandler = useCallback(async () => {
     if (!formState.formIsValid) {
       Alert.alert("Wrong input !!!", "Please check the errors in the form.", [
         { text: "Okay" },
@@ -74,8 +74,9 @@ const EditProductsScreen = (props) => {
     }
 
     const { title, price, imageURL, description } = formState.imputValues;
+    setIsLoading(true);
     if (product) {
-      dispatch(
+      await dispatch(
         productsAction.updateProduct(
           productId,
           title,
@@ -85,10 +86,11 @@ const EditProductsScreen = (props) => {
         )
       );
     } else {
-      dispatch(
+      await dispatch(
         productsAction.createProduct(title, description, imageURL, +price)
       );
     }
+    setIsLoading(false);
     props.navigation.goBack();
   }, [dispatch, productId, formState]);
 
@@ -105,6 +107,8 @@ const EditProductsScreen = (props) => {
       input: inputId,
     });
   };
+
+  if (isLoading) return <Spinner />;
 
   return (
     <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
