@@ -1,8 +1,11 @@
 import React from "react";
-import { createAppContainer } from "react-navigation";
+import { createAppContainer, createSwitchNavigator } from "react-navigation";
 import { createStackNavigator } from "react-navigation-stack";
-import { createDrawerNavigator } from "react-navigation-drawer";
+import { createDrawerNavigator, DrawerItems } from "react-navigation-drawer";
 import { Ionicons } from "@expo/vector-icons";
+import { SafeAreaView, Button, View } from "react-native";
+import { useDispatch } from "react-redux";
+import * as authAction from "../store/actions/auth";
 
 import ProductsOverviewScreen from "../screens/shop/ProductsOverviewScreen";
 import ProductDetailScreen from "../screens/shop/ProductDetailScreen";
@@ -11,6 +14,8 @@ import CartScreen from "../screens/shop/CartScreen";
 
 import UserProductsScreen from "../screens/user/UserProductsScreen";
 import EditProductsScreen from "../screens/user/EditProductsScreen";
+import AuthScreen from "../screens/user/AuthScreen";
+import StartupScreen from "../screens/StartupScreen";
 import Colors from "../constants/Colors";
 
 const defaultNavigationOptions = {
@@ -65,7 +70,7 @@ const ManageProductsNavigator = createStackNavigator(
   }
 );
 
-const MainNavigator = createDrawerNavigator(
+const ShopNavigator = createDrawerNavigator(
   {
     Products: {
       screen: ProductsNavigator,
@@ -88,7 +93,33 @@ const MainNavigator = createDrawerNavigator(
         fontSize: 18,
       },
     },
+    contentComponent: (props) => {
+      const dispatch = useDispatch();
+      const logout = () => dispatch(authAction.logout());
+      return (
+        <View style={{ flex: 1, paddingTop: 20 }}>
+          <SafeAreaView forceInset={{ top: "always", horisontal: "never" }}>
+            <DrawerItems {...props} />
+            <Button title="Logout" color={Colors.primary} onPress={logout} />
+          </SafeAreaView>
+        </View>
+      );
+    },
   }
 );
 
+const AuthNavigator = createStackNavigator(
+  {
+    Auth: AuthScreen,
+  },
+  { defaultNavigationOptions }
+);
+
+const MainNavigator = createSwitchNavigator({
+  Startup: StartupScreen,
+  Auth: AuthNavigator,
+  Shop: ShopNavigator,
+});
+
+// export default createAppContainer(ShopNavigator);
 export default createAppContainer(MainNavigator);
